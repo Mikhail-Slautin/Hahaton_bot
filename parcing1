@@ -1,0 +1,18 @@
+import requests
+from bs4 import BeautifulSoup
+from time import sleep
+
+    
+    
+    
+headers={"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.5112.124 YaBrowser/22.9.2.1495 Yowser/2.5 Safari/537.36"}
+url=f"https://vkusnoitochka.ru/menu"
+response=requests.get(url,headers=headers)
+soup=BeautifulSoup(response.text,'lxml')
+data=soup.find_all("li",class_="catalog-product base-grid-item")
+for i in data:
+    name=i.find("div",class_="catalog-product-title").text.replace("\n","")
+    price=i.find("p","catalog-product__price").text
+    print(name," - "," ".join(price.split( )[1:]))
+    
+    
