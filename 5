@@ -1,0 +1,119 @@
+import time
+import schedule
+from datetime import datetime
+import random
+import datetime
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup
+from telegram.ext import Updater, CallbackContext, CallbackQueryHandler, Filters, MessageHandler, TypeHandler
+import json
+import requests
+from bs4 import BeautifulSoup
+
+ask_reply_markup = ReplyKeyboardMarkup([['Заказать']], resize_keyboard=True)
+perem_zakazi_magaz=[1]
+
+ask_reply_markup1 = ReplyKeyboardMarkup([['Самому сделать заказ']], resize_keyboard=True)
+ask_reply_markup2 = ReplyKeyboardMarkup([['Получить инфу от заказавших']], resize_keyboard=True)
+
+def get_coin_side(): # функция которая проверяет есть ли уже сделанные заказы
+    return 'Показываем рестораны к которым можно присоедениться: <тут должен быть список ресторанов>' if len(perem_zakazi_magaz) > 0 else 'Самому сделать заказ'
+
+
+coin_inline_keyboard_markup = InlineKeyboardMarkup([
+        [InlineKeyboardButton("Самому сделать заказ", callback_data='flip_a_coin_again')]
+    ])
+
+main_user_id = 316600126 #id пользователя который будет основным заказчиком  и работником
+def flip_a_coin(update: Update, context: CallbackContext):
+    update.message.reply_text(get_coin_side(), reply_markup=coin_inline_keyboard_markup)
+    context.bot.send_message(chat_id=update.effective_chat.id, text='Мы предлагаем выбрать вам ресторан из заказов либо создать свой заказ.',
+                             reply_markup=ask_reply_markup1)
+    #context.bot.send_message(chat_id=update.effective_chat.id, text=update.effective_chat.id)
+    
+
+def flip_a_coin_again(update: Update, context: CallbackContext) -> None:
+    text = f'{get_coin_side()}\nОтредактировано: {datetime.datetime.now().isoformat()}'
+    update.callback_query.edit_message_text(text=text, reply_markup=coin_inline_keyboard_markup)
+
+
+def get_random_number(): #функция генерации числа
+    return random.randint(0, 100)
+
+
+
+#def new_random_number(update: Update, context: CallbackContext) -> None:
+    #text = f'{get_random_number()}\nОтредактировано: {datetime.datetime.now().isoformat()}'
+    #update.callback_query.edit_message_text(text=text, reply_markup=number_inline_keyboard_markup)
+
+#def echo(update: Update, context: CallbackContext) -> None:
+    #text = json.dumps(update.to_dict(), indent=2)
+    #context.bot.send_message(chat_id=update.effective_chat.id, text=user.id)
+
+
+
+
+spisok_vsex_rest = InlineKeyboardMarkup([
+        [InlineKeyboardButton("Dodo", callback_data='parse_kafe')],
+        [InlineKeyboardButton("Вкусно и точка", callback_data='parse_kafe')],
+        [InlineKeyboardButton("Полет", callback_data='parse_kafe')]
+    ])    
+def otvet_zakaz():
+    return 'Выберите ресторан:'
+
+def pokaz_rest(update: Update, context: CallbackContext) -> None:
+    update.message.reply_text(otvet_zakaz(), reply_markup=spisok_vsex_rest)
+    context.bot.send_message(chat_id=update.effective_chat.id, text='Dodo, Вкусно и точка, Полет',
+                            reply_markup=ask_reply_markup)
+
+def osnovnoi_zakaz(update: Update, context: CallbackContext) -> None:
+    if main_user_id == 316600126:
+        context.bot.send_message(chat_id=update.effective_chat.id, text='Показ списка товаров которые нужно заказать:',
+                                reply_markup=ask_reply_markup2)
+
+def parcing():
+    url=f"https://vkusnoitochka.ru/menu"
+    response=requests.get(url)
+    soup=BeautifulSoup(response.text,'lxml')
+    data=soup.find_all("li",class_="catalog-product base-grid-item")
+    for i in data:
+        name=i.find("div",class_="catalog-product-title").text.replace("\n","")
+        price=i.find("p","catalog-product__price").text
+        print(name," - "," ".join(price.split( )[1:]))
+
+
+def main() -> None:
+    updater = Updater("5734431889:AAFnu9JnzAU00pSfqnkHNpunxuADd1avlVY")
+    updater.dispatcher.add_handler(
+        MessageHandler(Filters.update.message & Filters.text('Заказать'), flip_a_coin)) #вызов функции которая срабатывает при слове Заказать 
+    updater.dispatcher.add_handler(
+        MessageHandler(Filters.update.message & Filters.text('Самому сделать заказ'), pokaz_rest))
+    #updater.dispatcher.add_handler(TypeHandler(Update, echo))
+    updater.start_polling()
+    parcing()
+    print('Started')
+    
+    
+    updater.idle()
+
+
+
+if __name__ == "__main__":
+    schedule.every().day.at("13:20").do(osnovnoi_zakaz)
+    #headers={"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.5112.124 YaBrowser/22.9.2.1501 Yowser/2.5 Safari/537.36"}
+    url=f"https://vkusnoitochka.ru/menu"
+    response=requests.get(url)
+    soup=BeautifulSoup(response.text,'lxml')
+    data=soup.find_all("li",class_="catalog-product base-grid-item")
+    for i in data:
+        name=i.find("div",class_="catalog-product-title").text.replace("\n","")
+        price=i.find("p","catalog-product__price").text
+        print(name," - "," ".join(price.split( )[1:]))
+    main()
+
+while True:
+    schedule.run_pending()
+    time.sleep(1)
+
+
+
+
