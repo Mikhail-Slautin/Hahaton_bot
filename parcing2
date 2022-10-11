@@ -1,0 +1,34 @@
+def parcing_vit():
+    url=f"https://vkusnoitochka.ru/menu"
+    response=requests.get(url)
+    soup=BeautifulSoup(response.text,'lxml')
+    data=soup.find_all("li",class_="catalog-product base-grid-item")
+    for i in data:
+        name=i.find("div",class_="catalog-product-title").text.replace("\n","")
+        price=i.find("p","catalog-product__price").text
+        print(name," - "," ".join(price.split( )[1:]))
+
+def parcing_sushi():
+    url=f"https://sushiwok.ru/dub/menu/biznes-lanchi/"
+    response=requests.get(url)
+    soup=BeautifulSoup(response.text,"lxml")
+    data=soup.find_all("div",class_="card-wrapper--grid")
+    count=0
+    for i in data:
+        name=i.find("p",class_="card__name js-content").text.replace("\n","")
+        price=i.find("span",class_="card__price__current--is-action").text
+        print(name," - "," ".join(price.split()))
+        count=count+1
+        if count==9:
+            break
+            
+def parcing_pizz():
+    url='https://www.pizzeroni.ru/#menu'
+    response = requests.get(url)
+    soup=BeautifulSoup(response.text,'lxml')
+    data = soup.find_all("div", class_='quicktabs-tabpage quicktabs-hide')
+    for i in data:
+        name=i.find("div",class_="views-field views-field-title").text.replace("\n","")
+        price=i.find("div",class_="views-field views-field-commerce-price").text
+        print(name,price)
+            
